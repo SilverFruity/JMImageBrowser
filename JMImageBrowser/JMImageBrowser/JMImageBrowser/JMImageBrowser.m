@@ -175,15 +175,18 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
     [[SDWebImageManager sharedManager] loadImageWithURL:url options:0 progress:^(NSInteger receivedSize, NSInteger expectedSize, NSURL * _Nullable targetURL) {
         double progress = ((double)receivedSize) / ((double)expectedSize);
         dispatch_async(dispatch_get_main_queue(), ^{
+            //判断该进度是否是当前cell要显示的图片的下载进度
             if (![weakCell.currentURL.absoluteString isEqualToString:targetURL.absoluteString]){
                 return;
             }
             cell.progress = progress;
         });
     } completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, SDImageCacheType cacheType, BOOL finished, NSURL * _Nullable imageURL) {
-        if (![weakCell.currentURL.absoluteString isEqualToString:imageURL.absoluteString]){
+        //判断此时是否是当前cell要显示的图片
+        if (![weakCell.currentURL.absoluteString isEqualToString:imageURL.absoluteString] && cacheType == SDImageCacheTypeNone){
             return;
         }
+        
         if ([imageURL.absoluteString hasSuffix:@".gif"]) {
             cell.imageView.animatedImage = [[FLAnimatedImage alloc]initWithAnimatedGIFData:data];
         }else{
@@ -223,9 +226,7 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
 }
 @end
 
-#pragma mark Cell
-
-
+#pragma mark - JMImageBrowserCell
 @implementation JMImageBrowserCell
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -290,8 +291,6 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
 }
 
 
-#pragma mark - UIScrollViewDelegate
-
 - (nullable UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView {
     return _imageView;
 }
@@ -304,8 +303,7 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
     [self refreshImageContainerViewCenter];
 }
 
-#pragma mark - Private
-
+//让imageView始终居中
 - (void)refreshImageContainerViewCenter {
     CGFloat offsetX = (_scrollView.JM_Width > _scrollView.contentSize.width) ? ((_scrollView.JM_Width - _scrollView.contentSize.width) * 0.5) : 0.0;
     CGFloat offsetY = (_scrollView.JM_Height > _scrollView.contentSize.height) ? ((_scrollView.JM_Height - _scrollView.contentSize.height) * 0.5) : 0.0;
@@ -314,9 +312,9 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
 @end
 
 
-
+#pragma mark - JMImageBrowserProgrsssLayer
 @implementation JMImageBrowserProgrsssLayer
-
+//判断当前指定的属性key改变是否需要重新绘制。
 + (BOOL)needsDisplayForKey:(NSString *)key{
     if ([key isEqualToString:@"progress"]) {
         return YES;
@@ -330,11 +328,14 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
     }
     return self;
 }
+
+//设置progress也直接进行重绘
 - (void)setProgress:(CGFloat)progress{
     _progress = progress;
     [self setNeedsDisplay];
 }
 
+//实现绘制
 - (void)drawInContext:(CGContextRef)ctx{
     if (_progress == 0) {
         return;
@@ -347,6 +348,7 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
     UIBezierPath *path = [UIBezierPath bezierPath];
     path.lineWidth = pathWidth;
     
+    //圆弧
     CGFloat ratio = 0;
     if (_progress <= 0.25) {
         ratio = 2 * _progress + 1.5;
@@ -358,7 +360,8 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
     CGContextSetLineCap(ctx, kCGLineCapRound);
     CGContextAddPath(ctx, path.CGPath);
     CGContextStrokePath(ctx);
-    //进度
+    
+    //文本
     UIFont *font = [UIFont systemFontOfSize:12];
     NSString *numberText = [NSString stringWithFormat:@"%.0f%%",_progress * 100];
     NSDictionary *attribute = @{NSFontAttributeName:font,

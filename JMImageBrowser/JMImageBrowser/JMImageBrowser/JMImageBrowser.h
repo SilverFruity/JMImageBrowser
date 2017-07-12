@@ -23,17 +23,30 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface JMImageBrowserCell:UICollectionViewCell<UIScrollViewDelegate>
-@property (nonatomic, assign) double progress;
-@property (nonatomic, strong) JMImageBrowserProgrsssLayer *progressLayer;
-@property (nonatomic, strong) UIScrollView *scrollView;
-@property (nonatomic, strong) FLAnimatedImageView  *imageView;
-@property (nonatomic, strong) NSURL *currentURL;
 @property (nonatomic, weak) id <JMImageBrowserCellDelegate> delegate;
+///进度
+@property (nonatomic, assign) double progress;
+///进度动画Layer
+@property (nonatomic, strong) JMImageBrowserProgrsssLayer *progressLayer;
+@property (nonatomic, strong) FLAnimatedImageView  *imageView;
+///cell当前展示的图片URL
+@property (nonatomic, strong) NSURL *currentURL;
+@property (nonatomic, strong) UIScrollView *scrollView;
 - (void)recoverSubviews;
 @end
 
 @interface JMImageBrowser : UIViewController
-- (instancetype)initWithUrls:(NSArray *)urls
+
+/**
+ 初始化方法
+ 
+ @param urls 图片地址数组
+ @param index 选中的位置
+ @param rectBlock 返回动画需要的Rect的闭包
+ @param scrollBlock 滚动到新Cell的回调
+ @return JMImageBrowser
+ */
+- (instancetype)initWithUrls:(NSArray <NSString *>*)urls
                        index:(NSUInteger)index
                    rectBlock:(CGRect(^)(NSUInteger index))rectBlock
                  scrollBlock:(nullable void(^)(NSUInteger index))scrollBlock;

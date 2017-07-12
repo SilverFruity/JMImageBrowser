@@ -11,7 +11,7 @@
 #import "UIImageView+WebCache.h"
 #import "JMImageBrowser.h"
 
-NSUInteger const kStoreAlbumItemsofSecion = 3;
+NSUInteger const kItemCountOfSecion = 3;
 static NSString *const cellIdentify = @"UICollectionViewCell";
 
 @interface ViewController ()<UICollectionViewDelegate,UICollectionViewDataSource>
@@ -23,8 +23,12 @@ static NSString *const cellIdentify = @"UICollectionViewCell";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSLog(@"%@",paths.firstObject);
+    NSString *path = [NSString stringWithFormat:@"%@/default",paths.firstObject];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    [fileManager removeItemAtPath:path error:nil];
+    [SDWebImageManager sharedManager].imageCache.maxMemoryCountLimit = 0;
     
     self.data = @[
                   @[@"http://wx4.sinaimg.cn/mw690/68611fd2gy1fhfwzkbzwmj20xc0p0adv.jpg",@"http://wx4.sinaimg.cn/mw690/4be9bfb5gy1fhg48uu1e6j20qo0qowjx.jpg"],
@@ -55,16 +59,16 @@ static NSString *const cellIdentify = @"UICollectionViewCell";
 #pragma mark - UICollectionViewDataSource
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
-    NSInteger numberOfSecion = (_data.count - 1) / kStoreAlbumItemsofSecion + 1;
+    NSInteger numberOfSecion = (_data.count - 1) / kItemCountOfSecion + 1;
     return numberOfSecion;
 }
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
-    NSInteger itemCount = _data.count / kStoreAlbumItemsofSecion == section ? _data.count % kStoreAlbumItemsofSecion : kStoreAlbumItemsofSecion;
+    NSInteger itemCount = _data.count / kItemCountOfSecion == section ? _data.count % kItemCountOfSecion : kItemCountOfSecion;
     return itemCount;
 }
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentify forIndexPath:indexPath];
-    NSUInteger index = kStoreAlbumItemsofSecion * indexPath.section + indexPath.row;
+    NSUInteger index = kItemCountOfSecion * indexPath.section + indexPath.row;
     NSURL *url = [NSURL URLWithString:self.data[index].firstObject];
     if (cell.contentView.subviews.count == 0) {
         UIImageView *imageView = [[UIImageView alloc]init];
@@ -76,27 +80,29 @@ static NSString *const cellIdentify = @"UICollectionViewCell";
         return cell;
     }
     UIImageView *imageView = cell.contentView.subviews.firstObject;
+    cell.contentView.backgroundColor = [UIColor lightGrayColor];
     [imageView sd_setImageWithURL:url];
     return cell;
 }
 
+#pragma mark - UICollectionViewDelegate
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
-    
-    NSUInteger selectIndex = kStoreAlbumItemsofSecion * indexPath.section + indexPath.row;
+    NSUInteger selectIndex = kItemCountOfSecion * indexPath.section + indexPath.row;
     NSMutableArray *originalArr = [NSMutableArray array];
     for (NSArray *arr in self.data) {
         [originalArr addObject:arr.lastObject];
     }
     JMImageBrowser *vc = [[JMImageBrowser alloc]initWithUrls:originalArr index:selectIndex rectBlock:^CGRect(NSUInteger index) {
         //将index转为NSIndexPath
-        NSIndexPath *path = [NSIndexPath indexPathForRow:index % kStoreAlbumItemsofSecion inSection:index / kStoreAlbumItemsofSecion];
+        NSIndexPath *path = [NSIndexPath indexPathForRow:index % kItemCountOfSecion inSection:index / kItemCountOfSecion];
         //获取在indexPath处的cell
         UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:path];
         CGRect cellWindowRect = [cell convertRect:cell.bounds toView:nil];
         return cellWindowRect;
+        
     } scrollBlock:^(NSUInteger index) {
         //当浏览视器的图片Index超出当前collectionView可见cell时，collectionView滚动到最新的index
-        NSIndexPath *path = [NSIndexPath indexPathForRow:index % kStoreAlbumItemsofSecion inSection:index / kStoreAlbumItemsofSecion];
+        NSIndexPath *path = [NSIndexPath indexPathForRow:index % kItemCountOfSecion inSection:index / kItemCountOfSecion];
         if (![collectionView.indexPathsForVisibleItems containsObject:path]) {
             [collectionView scrollToItemAtIndexPath:path atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
         }
@@ -112,16 +118,16 @@ static NSString *const cellIdentify = @"UICollectionViewCell";
     CGFloat sectionLeftAndRightMargin = 5;
     
     UIEdgeInsets sectionInset = UIEdgeInsetsMake(padding * 0.5 , sectionLeftAndRightMargin, padding * 0.5, sectionLeftAndRightMargin);
-    CGFloat itemWidth = (frame.size.width - padding * (kStoreAlbumItemsofSecion - 1) - sectionInset.left - sectionInset.right) / kStoreAlbumItemsofSecion;
+    CGFloat itemWidth = (frame.size.width - padding * (kItemCountOfSecion - 1) - sectionInset.left - sectionInset.right) / kItemCountOfSecion;
     flowLayout.itemSize = CGSizeMake(itemWidth, itemWidth);
     flowLayout.minimumLineSpacing = padding;
     flowLayout.minimumInteritemSpacing = padding;
     flowLayout.sectionInset = sectionInset;
     flowLayout.scrollDirection = UICollectionViewScrollDirectionVertical;
-    UICollectionView *view = [[UICollectionView alloc]initWithFrame:frame collectionViewLayout:flowLayout];
-    view.delegate = self;
-    view.dataSource = self;
-    return view;
+    UICollectionView *collectionView = [[UICollectionView alloc]initWithFrame:frame collectionViewLayout:flowLayout];
+    collectionView.delegate = self;
+    collectionView.dataSource = self;
+    return collectionView;
 }
 
 
