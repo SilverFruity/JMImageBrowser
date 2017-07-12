@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)JMImageBrowserCell:(JMImageBrowserCell *)cell singleTap:(UITapGestureRecognizer *)singleTap;
 @end
 
-//动画Layer
+//进度条，百分比Layer
 @interface JMImageBrowserProgrsssLayer : CALayer
 @property(nonatomic,assign)CGFloat progress;
 @end
@@ -26,7 +26,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id <JMImageBrowserCellDelegate> delegate;
 ///进度
 @property (nonatomic, assign) double progress;
-///进度动画Layer
 @property (nonatomic, strong) JMImageBrowserProgrsssLayer *progressLayer;
 @property (nonatomic, strong) FLAnimatedImageView  *imageView;
 ///cell当前展示的图片URL
@@ -36,13 +35,13 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface JMImageBrowser : UIViewController
-
+@property (nonatomic, assign)BOOL hideStatuBar;//是否隐藏状态栏
 /**
  初始化方法
  
  @param urls 图片地址数组
  @param index 选中的位置
- @param rectBlock 返回动画需要的Rect的闭包
+ @param rectBlock 返回动画需要的Rect
  @param scrollBlock 滚动到新Cell的回调
  @return JMImageBrowser
  */

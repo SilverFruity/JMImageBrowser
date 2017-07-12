@@ -57,7 +57,8 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
 
 - (void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
+    
+   if(_hideStatuBar) [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
     UIImage *CacheImage = [[SDImageCache sharedImageCache]imageFromCacheForKey:_urls[_currentIndex]];
     [self showAnimation:CacheImage];
 }
@@ -65,7 +66,7 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
 
 - (void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
-    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
+    if(_hideStatuBar) [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
 }
 
 - (instancetype)init
@@ -260,10 +261,11 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
     return self;
 }
 - (void)setProgress:(double)progress{
+    //当为0时，不会有动画
     if (progress != 0) {
         CABasicAnimation *progressAni = [CABasicAnimation animationWithKeyPath:@"progress"];
         if (progress >= 0.95 || _progress == 0) {
-            progressAni.duration = 0.1;
+            progressAni.duration = 0.1; //95%以上时，加快动画速度
         }else{
             progressAni.duration = 5 * (progress - _progress);
         }
@@ -322,6 +324,7 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
     return [super needsDisplayForKey:key];
 }
 
+//CoreAnimation动画时的帧，用于获取自定义变量progress
 - (instancetype)initWithLayer:(JMImageBrowserProgrsssLayer *)layer{
     if (self = [super initWithLayer:layer]) {
         self.progress = layer.progress;
@@ -348,7 +351,7 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
     UIBezierPath *path = [UIBezierPath bezierPath];
     path.lineWidth = pathWidth;
     
-    //圆弧
+    //进度条
     CGFloat ratio = 0;
     if (_progress <= 0.25) {
         ratio = 2 * _progress + 1.5;
@@ -361,7 +364,7 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
     CGContextAddPath(ctx, path.CGPath);
     CGContextStrokePath(ctx);
     
-    //文本
+    //百分比
     UIFont *font = [UIFont systemFontOfSize:12];
     NSString *numberText = [NSString stringWithFormat:@"%.0f%%",_progress * 100];
     NSDictionary *attribute = @{NSFontAttributeName:font,
