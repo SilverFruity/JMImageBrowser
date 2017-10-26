@@ -23,7 +23,7 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
 @interface JMImageBrowser ()<UICollectionViewDelegate,UICollectionViewDataSource,JMImageBrowserCellDelegate>
 @property (nonatomic, strong)UICollectionView *collectionView;
 @property (nonatomic, strong)UILabel *indexLB;
-@property (nonatomic, strong)NSArray <NSString *>*urls;
+@property (nonatomic, copy)NSArray <NSString *>*urls;
 @property (nonatomic, copy)CGRect(^rectBlock)(NSUInteger index);
 @property (nonatomic, copy)void(^scrollBlock)(NSUInteger index);
 @property (nonatomic, assign)NSUInteger currentIndex;
@@ -57,18 +57,9 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
 
 - (void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    
-   if(_hideStatuBar) [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
     UIImage *CacheImage = [[SDImageCache sharedImageCache]imageFromCacheForKey:_urls[_currentIndex]];
     [self showAnimation:CacheImage];
 }
-
-
-- (void)viewWillDisappear:(BOOL)animated{
-    [super viewWillDisappear:animated];
-    if(_hideStatuBar) [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
-}
-
 - (instancetype)init
 {
     self = [super init];
@@ -183,6 +174,13 @@ NSString *const JMImageBrowserCellIdentify = @"JMImageBrowserCell";
             cell.progress = progress;
         });
     } completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, SDImageCacheType cacheType, BOOL finished, NSURL * _Nullable imageURL) {
+        
+        if (error) {
+            if (self.handleError) {
+                self.handleError(error);
+            }
+            return;
+        }
         //判断此时是否是当前cell要显示的图片
         if (![weakCell.currentURL.absoluteString isEqualToString:imageURL.absoluteString] && cacheType == SDImageCacheTypeNone){
             return;

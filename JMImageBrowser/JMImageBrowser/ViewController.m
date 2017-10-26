@@ -16,7 +16,7 @@ static NSString *const cellIdentify = @"UICollectionViewCell";
 
 @interface ViewController ()<UICollectionViewDelegate,UICollectionViewDataSource>
 @property (nonatomic, weak)UICollectionView *collectionView;
-@property (nonatomic, strong)NSArray <NSArray <NSString *>*> *data;
+@property (nonatomic, copy)NSArray <NSArray <NSString *>*> *data;
 @end
 
 @implementation ViewController
@@ -93,20 +93,25 @@ static NSString *const cellIdentify = @"UICollectionViewCell";
         [originalArr addObject:arr.lastObject];
     }
     JMImageBrowser *vc = [[JMImageBrowser alloc]initWithUrls:originalArr index:selectIndex rectBlock:^CGRect(NSUInteger index) {
+        //返回点击前相对于window的frame,显示的时候会调用一次，隐藏的时候也会调用一次
+        /*
+         *    不直接使用indexPath的原因是: 此时不论是在显示还是隐藏都将使用最开始点击的cell的frame
+         *    比如: 我点击了第一张图，滑动到了第二张，如果直接引用indexPath，隐藏的时候依然会回到第一张图的位置
+         */
         //将index转为NSIndexPath
         NSIndexPath *path = [NSIndexPath indexPathForRow:index % kItemCountOfSecion inSection:index / kItemCountOfSecion];
-        //获取在indexPath处的cell
         UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:path];
         CGRect cellWindowRect = [cell convertRect:cell.bounds toView:nil];
         return cellWindowRect;
         
     } scrollBlock:^(NSUInteger index) {
-        //当浏览视器的图片Index超出当前collectionView可见cell时，collectionView滚动到最新的index
+        //当浏览视图的图片Index超出当前collectionView可见cell时，collectionView滚动到最新的index
         NSIndexPath *path = [NSIndexPath indexPathForRow:index % kItemCountOfSecion inSection:index / kItemCountOfSecion];
         if (![collectionView.indexPathsForVisibleItems containsObject:path]) {
             [collectionView scrollToItemAtIndexPath:path atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
         }
     }];
+    
     [self.view.window addSubview:vc.view];
 }
 

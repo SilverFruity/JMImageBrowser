@@ -35,14 +35,15 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface JMImageBrowser : UIViewController
-@property (nonatomic, assign)BOOL hideStatuBar;//是否隐藏状态栏
+
+@property (nonatomic, copy, nullable)void(^handleError)(NSError *error);
 /**
  初始化方法
  
  @param urls 图片地址数组
  @param index 选中的位置
- @param rectBlock 返回动画需要的Rect
- @param scrollBlock 滚动到新Cell的回调
+ @param rectBlock 显示和隐藏动画需要的frame
+ @param scrollBlock 滚动到显示以外的Cell的回调
  @return JMImageBrowser
  */
 - (instancetype)initWithUrls:(NSArray <NSString *>*)urls
